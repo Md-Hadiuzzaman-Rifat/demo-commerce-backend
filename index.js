@@ -4,6 +4,10 @@ const { ObjectId } = require('mongodb');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 require("dotenv").config();
 
+const multer = require('multer');
+const mongoose = require('mongoose');
+const path = require('path');
+
 const app = express();
 //Add a Mongodb URL
 const uri = process.env.MONGODB_URL
@@ -207,10 +211,47 @@ app.delete("/deleteSubCategory/:id", async (req, res) => {
 });
 
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ storage: storage });
 
 
+mongoose.connect(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
+// Define a mongoose schema for your image collection
+const ImageSchema = new mongoose.Schema({
+  filename: String,
+  path: String
+});
+const Image = mongoose.model('Image', ImageSchema);
+// Route to handle file uploads
+app.post('/upload', upload.array('images', 5), async (req, res) => {
+  try {
+    const files = req.files;
+    const savedFiles = await Promise.all(files.map(async (file) => {
+      const image = new Image({
+        filename: file.filename,
+        path: file.path
+      });
+      return await image.save();
+    }));
 
+    res.status(200).json({ message: 'Files uploaded successfully', files: savedFiles });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error uploading files' });
+  }
+});
 
 
 // will work on this

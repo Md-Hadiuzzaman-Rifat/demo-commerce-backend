@@ -3,10 +3,7 @@ const cors = require('cors');
 const { ObjectId } = require('mongodb');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 require("dotenv").config();
-
-const multer = require('multer');
-const mongoose = require('mongoose');
-const path = require('path');
+const multer = require('multer')
 
 const app = express();
 //Add a Mongodb URL
@@ -24,6 +21,7 @@ const client = new MongoClient(uri, {
 // You must install CORS()
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'))
 
 // rename the user and collection
 const database = client.db('electric-demo');
@@ -31,11 +29,43 @@ const userList = database.collection('userList');
 const productList= database.collection("productList")
 const categoryList= database.collection("categoryList")
 const subCategoryList= database.collection("subCategoryList")
+const ImageList= database.collection("imageList")
 
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
+
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    return cb(null, "./public/Images")
+  },
+  filename: function (req, file, cb) {
+    return cb(null, `${Date.now()}_${file.originalname}`)
+  }
+})
+
+const upload = multer({storage})
+
+app.post('/upload', upload.single('file'), async(req, res) => {
+  const imgName= req.file.filename
+  try{
+    await ImageList.insertOne({image: imgName})
+  }catch(err){
+    console.log("failed");
+  }
+})
+
+app.get('/get-upload', async(req, res)=>{
+  try{
+    const users = await ImageList.find({});
+    const result = await users.toArray();
+    res.send(result);
+  }catch(err){
+    console.log("failed to find image");
+  }
+})
+
 
 
 // create logged in users collection
@@ -211,47 +241,10 @@ app.delete("/deleteSubCategory/:id", async (req, res) => {
 });
 
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-
-const upload = multer({ storage: storage });
 
 
-mongoose.connect(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
 
-// Define a mongoose schema for your image collection
-const ImageSchema = new mongoose.Schema({
-  filename: String,
-  path: String
-});
-const Image = mongoose.model('Image', ImageSchema);
-// Route to handle file uploads
-app.post('/upload', upload.array('images', 5), async (req, res) => {
-  try {
-    const files = req.files;
-    const savedFiles = await Promise.all(files.map(async (file) => {
-      const image = new Image({
-        filename: file.filename,
-        path: file.path
-      });
-      return await image.save();
-    }));
 
-    res.status(200).json({ message: 'Files uploaded successfully', files: savedFiles });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error uploading files' });
-  }
-});
 
 
 // will work on this

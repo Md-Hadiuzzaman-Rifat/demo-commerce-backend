@@ -56,6 +56,22 @@ app.post('/upload', upload.single('file'), async(req, res) => {
   }
 })
 
+
+// console.log(req.files.length);
+app.post('/uploadProduct', upload.array('files'), async(req, res) => {
+
+  const description = JSON.parse(req.body.message)
+
+  try{
+    const result= await productList.insertOne({description, images: req.files})
+    res.send(result)
+  }catch(err){
+    res.status(400).send({
+      message: 'This is an error uploading Image!'
+   });
+  }
+})
+
 app.get('/get-upload', async(req, res)=>{
   try{
     const users = await ImageList.find({});

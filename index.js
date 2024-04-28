@@ -48,7 +48,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-app.post("/upload", upload.single("file"), async (req, res) => {
+app.post("/createCategory", upload.single("file"), async (req, res) => {
   const imgName = req.file.filename;
   const text = req.body.category;
 
@@ -95,7 +95,7 @@ app.post("/uploadProduct", upload.array("files"), async (req, res) => {
   }
 });
 
-app.get("/get-upload", async (req, res) => {
+app.get("/getCategories", async (req, res) => {
   try {
     const users = await ImageList.find({});
     const result = await users.toArray();

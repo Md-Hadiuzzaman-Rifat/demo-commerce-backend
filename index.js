@@ -65,32 +65,19 @@ app.delete("/category/:imageName", async(req, res) => {
   const imagePath = `./public/Images/${imageName}`;
 
 
-  fs.unlink(imagePath, (err) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Failed to delete image" });
-    }
-    res.json({ message: "Image deleted successfully" });
-  });
-  
+  try{
+    fs.unlink(imagePath, (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Failed to delete image" });
+      }
+    });
+    await  ImageList.deleteOne({image:imageName});
+  }catch(err){
+    res.json({ message: "Image deleted successfully" })
+  }
+
 });
-
-// // unlink the upload image:
-// app.delete("/category/:imageName", (req, res) => {
-//   const imageName = req.params.imageName;
-//   const imagePath = `./public/Images/${imageName}`;
-//   console.log(imagePath);
-
-//   fs.unlink(imagePath, (err) => {
-//     if (err) {
-//       console.error(err);
-//       return res.status(500).json({ message: "Failed to delete image" });
-//     }
-//     res.json({ message: "Image deleted successfully" });
-//   });
-// });
-
-
 
 app.post("/uploadProduct", upload.array("files"), async (req, res) => {
   const description = JSON.parse(req.body.message);

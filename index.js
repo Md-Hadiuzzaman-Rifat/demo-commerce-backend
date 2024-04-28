@@ -1,13 +1,16 @@
-const express = require('express');
-const cors = require('cors');
-const { ObjectId } = require('mongodb');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const express = require("express");
+const cors = require("cors");
+const { ObjectId } = require("mongodb");
+const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
-const multer = require('multer')
+const multer = require("multer");
+const fs = require('fs');
+const { log } = require("console");
+
 
 const app = express();
 //Add a Mongodb URL
-const uri = process.env.MONGODB_URL
+const uri = process.env.MONGODB_URL;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -17,84 +20,113 @@ const client = new MongoClient(uri, {
   },
 });
 
-
 // You must install CORS()
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'))
+app.use(express.static("public"));
 
 // rename the user and collection
-const database = client.db('electric-demo');
-const userList = database.collection('userList');
-const productList= database.collection("productList")
-const categoryList= database.collection("categoryList")
-const subCategoryList= database.collection("subCategoryList")
-const ImageList= database.collection("imageList")
+const database = client.db("electric-demo");
+const userList = database.collection("userList");
+const productList = database.collection("productList");
+const categoryList = database.collection("categoryList");
+const subCategoryList = database.collection("subCategoryList");
+const ImageList = database.collection("imageList");
 
-
-app.get('/', (req, res) => {
-  res.send('Hello World!');
+app.get("/", (req, res) => {
+  res.send("Hello World!");
 });
 
 const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    return cb(null, "./public/Images")
+  destination: function (req, file, cb) {
+    return cb(null, "./public/Images");
   },
   filename: function (req, file, cb) {
-    return cb(null, `${Date.now()}_${file.originalname}`)
+    return cb(null, `${Date.now()}_${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage });
+
+app.post("/upload", upload.single("file"), async (req, res) => {
+  const imgName = req.file.filename;
+  const text = req.body.category;
+
+  try {
+    await ImageList.insertOne({ image: imgName, category: text });
+  } catch (err) {
+    console.log("failed in single image category upload");
   }
-})
+});
 
-const upload = multer({storage})
-
-app.post('/upload', upload.single('file'), async(req, res) => {
-  const imgName= req.file.filename
-  try{
-    await ImageList.insertOne({image: imgName})
-  }catch(err){
-    console.log("failed");
-  }
-})
+// unlink the upload image:
+app.delete("/category/:imageName", async(req, res) => {
+  const imageName = req.params.imageName;
+  const imagePath = `./public/Images/${imageName}`;
 
 
-// console.log(req.files.length);
-app.post('/uploadProduct', upload.array('files'), async(req, res) => {
+  fs.unlink(imagePath, (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Failed to delete image" });
+    }
+    res.json({ message: "Image deleted successfully" });
+  });
+  
+});
 
-  const description = JSON.parse(req.body.message)
+// // unlink the upload image:
+// app.delete("/category/:imageName", (req, res) => {
+//   const imageName = req.params.imageName;
+//   const imagePath = `./public/Images/${imageName}`;
+//   console.log(imagePath);
 
-  try{
-    const result= await productList.insertOne({description, images: req.files})
-    res.send(result)
-  }catch(err){
+//   fs.unlink(imagePath, (err) => {
+//     if (err) {
+//       console.error(err);
+//       return res.status(500).json({ message: "Failed to delete image" });
+//     }
+//     res.json({ message: "Image deleted successfully" });
+//   });
+// });
+
+
+
+app.post("/uploadProduct", upload.array("files"), async (req, res) => {
+  const description = JSON.parse(req.body.message);
+
+  try {
+    const result = await productList.insertOne({
+      description,
+      images: req.files,
+    });
+    res.status(200).json({ status: "ok" });
+  } catch (err) {
     res.status(400).send({
-      message: 'This is an error uploading Image!'
-   });
+      message: "This is an error uploading Image!",
+    });
   }
-})
+});
 
-app.get('/get-upload', async(req, res)=>{
-  try{
+app.get("/get-upload", async (req, res) => {
+  try {
     const users = await ImageList.find({});
     const result = await users.toArray();
     res.send(result);
-  }catch(err){
+  } catch (err) {
     console.log("failed to find image");
   }
-})
-
-
+});
 
 // create logged in users collection
 app.post("/addUser", async (req, res) => {
-  console.log(req.body);
   try {
     const user = req.body;
-    console.log(user);
     const filter = { email: user.email };
     const option = { upsert: true };
     const updateDoc = { $set: user };
     const result = await userList.updateOne(filter, updateDoc, option);
-    
+
     res.json(result);
   } catch {
     console.log("Failed to insert user.");
@@ -117,18 +149,18 @@ app.delete("/deleteUser/:id", async (req, res) => {
   try {
     const id = new ObjectId(req.params.id);
     let user = await userList.findOne({ _id: id });
-    if(user?.role){
-      delete user.role
+    if (user?.role) {
+      delete user.role;
     }
-    const filter = { _id: id }
+    const filter = { _id: id };
     const updateDoc = {
       $set: {
-        role:""
+        role: "",
       },
     };
-    const result =await userList.updateOne(filter, updateDoc);
+    const result = await userList.updateOne(filter, updateDoc);
     console.log(result);
-    res.send(result)
+    res.send(result);
   } catch (err) {
     console.log("Failed to delete users collection");
   }
@@ -152,24 +184,6 @@ app.put(`/editUser/:id`, async (req, res) => {
   }
 });
 
-
-// product upload
-app.post("/uploadProduct", (req, res) => {
-  console.log(req.body);
-  async function run() {
-    try {
-      
-      const product = req.body;
-      const result = await productList.insertOne(product);
-      res.json(result);
-    } catch (err) {
-      console.log("failed to upload a new product");
-    }
-  }
-  run();
-});
-
-
 // category add get and delete
 app.get("/getCategory", (req, res) => {
   async function run() {
@@ -184,24 +198,21 @@ app.get("/getCategory", (req, res) => {
   run();
 });
 
-
 app.post("/addCategory", async (req, res) => {
-  async function run(){
+  async function run() {
     try {
       const category = req.body;
-      console.log(req.body);
       const result = await categoryList.insertOne(category);
       res.json(result);
     } catch (err) {
       console.log("failed to create Category order");
     }
   }
-  run()
+  run();
 });
 
-
 app.delete("/deleteCategory/:id", async (req, res) => {
-  async function run(){
+  async function run() {
     try {
       const id = new ObjectId(req.params.id);
       const result = await categoryList.deleteOne({ _id: id });
@@ -210,10 +221,8 @@ app.delete("/deleteCategory/:id", async (req, res) => {
       console.log("failed to delete category");
     }
   }
-  run()
+  run();
 });
-
-
 
 // subCategory add get and delete
 app.get("/getSubCategory", (req, res) => {
@@ -229,9 +238,8 @@ app.get("/getSubCategory", (req, res) => {
   run();
 });
 
-
 app.post("/addSubCategory", async (req, res) => {
-  async function run(){
+  async function run() {
     try {
       const subCategory = req.body;
       const result = await subCategoryList.insertOne(subCategory);
@@ -240,11 +248,11 @@ app.post("/addSubCategory", async (req, res) => {
       console.log("failed to create Sub Category order");
     }
   }
-  run()
+  run();
 });
 
 app.delete("/deleteSubCategory/:id", async (req, res) => {
-  async function run(){
+  async function run() {
     try {
       const id = new ObjectId(req.params.id);
       const result = await subCategoryList.deleteOne({ _id: id });
@@ -253,15 +261,8 @@ app.delete("/deleteSubCategory/:id", async (req, res) => {
       console.log("failed to delete sub category");
     }
   }
-  run()
+  run();
 });
-
-
-
-
-
-
-
 
 // will work on this
 app.get("/featuredProduct", (req, res) => {
@@ -291,39 +292,15 @@ app.get("/relatedProduct", (req, res) => {
   run();
 });
 
-// search products
-app.get("/searchProducts", (req, res) => {
+// get all Products
+app.get("/getProducts", (req, res) => {
   async function run() {
     try {
-      const products = await productList.find({});
+      const products = productList.find({});
       const result = await products.toArray();
       res.json(result);
     } catch (err) {
       console.log("failed to find");
-    }
-  }
-  run();
-});
-
-
-app.get("/getProducts", (req, res) => {
-  async function run() {
-    // console.log(req.query);
-    let currentPage = req.query?.page;
-    let limit = req.query?.limit;
-    if (currentPage >= 0) {
-      
-      try {
-        const products = productList
-          .find({})
-          .limit(currentPage * limit)
-        const result = await products.toArray();
-        console.log(result.length);
-        res.json(result);
-      } catch (err) {
-        console.log("failed to find");
-      }
-    } else {
     }
   }
   run();
@@ -494,16 +471,6 @@ app.put("/singleOrder", async (req, res) => {
     console.log("Failed to change status");
   }
 });
-
-
-
-
-
-
-
-
-
-
 
 app.listen(process.env.PORT, () => {
   console.log(`Example app listening on port ${process.env.PORT}`);

@@ -81,19 +81,36 @@ app.delete("/category/:imageName", async(req, res) => {
 
 app.post("/uploadProduct", upload.array("files"), async (req, res) => {
   const description = JSON.parse(req.body.message);
-
   try {
-    const result = await productList.insertOne({
+    await productList.insertOne({
       description,
       images: req.files,
     });
     res.status(200).json({ status: "ok" });
   } catch (err) {
     res.status(400).send({
-      message: "This is an error uploading Image!",
+      message: "This is an error uploading Product!",
     });
   }
 });
+
+app.put("/editProduct/:id", (req, res) => {
+  async function run() {
+    try {
+      const id = new ObjectId(req.params.id);
+      const filter = { _id: id };
+      const result = await productList.replaceOne(filter, req.body);
+     
+      res.status(200).json({ status: "ok" });
+    } catch (err) {
+      res.status(400).send({
+        message: "This is an error Edit Product!",
+      });
+    }
+  }
+  run();
+});
+
 
 app.get("/getCategories", async (req, res) => {
   try {
@@ -306,17 +323,6 @@ app.delete("/getProducts/:id", (req, res) => {
   run();
 });
 
-app.put("/editProduct/:id", (req, res) => {
-  async function run() {
-    try {
-      const id = new ObjectId(req.params.id);
-      const filter = { _id: id };
-      const result = await productList.replaceOne(filter, req.body);
-      res.json(result);
-    } catch (err) {}
-  }
-  run();
-});
 
 app.post("/getSelectedProduct", async (req, res) => {
   try {

@@ -32,6 +32,8 @@ const productList = database.collection("productList");
 const categoryList = database.collection("categoryList");
 const subCategoryList = database.collection("subCategoryList");
 const ImageList = database.collection("imageList");
+const clientList = database.collection("clientList")
+const orderList= database.collection("orderList")
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -51,7 +53,6 @@ const upload = multer({ storage });
 app.post("/createCategory", upload.single("file"), async (req, res) => {
   const imgName = req.file.filename;
   const text = req.body.category;
-
   try {
     await ImageList.insertOne({ image: imgName, category: text });
   } catch (err) {
@@ -63,8 +64,24 @@ app.post("/createCategory", upload.single("file"), async (req, res) => {
 app.delete("/category/:imageName", async(req, res) => {
   const imageName = req.params.imageName;
   const imagePath = `./public/Images/${imageName}`;
+  try{
+    fs.unlink(imagePath, (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Failed to delete image" });
+      }
+    });
+    await  ImageList.deleteOne({image:imageName});
+  }catch(err){
+    res.json({ message: "Image deleted successfully" })
+  }
 
+});
 
+// unlink multiple images:
+app.delete("/category/:imageName", async(req, res) => {
+  const imageName = req.params.imageName;
+  const imagePath = `./public/Images/${imageName}`;
   try{
     fs.unlink(imagePath, (err) => {
       if (err) {
@@ -136,6 +153,23 @@ app.post("/addUser", async (req, res) => {
     console.log("Failed to insert user.");
   }
 });
+
+// create logged in users collection
+app.post("/addClient", async (req, res) => {
+  try {
+    const user = req.body;
+    const filter = { phone: user.phone };
+    const option = { upsert: true };
+    const updateDoc = { $set: user };
+    const result = await clientList.updateOne(filter, updateDoc, option);
+    res.status(200).json({ status: "ok" });
+  } catch (err) {
+    res.status(400).send({
+      message: "Failed to insert client",
+    });
+  }
+});
+
 
 // get logged users collection
 app.get("/getUser", async (req, res) => {
@@ -298,13 +332,15 @@ app.get("/relatedProduct", (req, res) => {
 
 // get all Products
 app.get("/getProducts", (req, res) => {
+  console.log("get Product Query");
   async function run() {
     try {
       const products = productList.find({});
       const result = await products.toArray();
+      console.log(products);
       res.json(result);
     } catch (err) {
-      console.log("failed to find");
+      console.log("failed to find all");
     }
   }
   run();

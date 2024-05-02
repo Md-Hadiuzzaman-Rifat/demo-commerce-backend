@@ -302,6 +302,28 @@ app.delete("/deleteSubCategory/:id", async (req, res) => {
   run();
 });
 
+// edit payment start
+// This is for customer order status change
+app.put("/editPayment", async (req, res) => {
+  try {
+    const {id ,phone, transId } = req.body;
+    const _id = new ObjectId(id);
+    const filter = { _id };
+    const updateDoc = {
+      $set: {
+        payment:{phone, transId}
+      },
+    };
+    const result = await orderList.updateOne(filter, updateDoc);
+    res.send(result);
+  } catch (err) {
+    console.log("Failed to make payment.");
+  }
+});
+
+// edit payment end
+
+
 // will work on this
 app.get("/featuredProduct", (req, res) => {
   async function run() {
@@ -337,10 +359,9 @@ app.get("/getProducts", (req, res) => {
     try {
       const products = productList.find({});
       const result = await products.toArray();
-      console.log(products);
       res.json(result);
     } catch (err) {
-      console.log("failed to find all");
+      console.log("failed to find all Products");
     }
   }
   run();
@@ -387,17 +408,24 @@ app.get("/getProduct/:id", (req, res) => {
 
 // confirm order
 app.post("/confirmOrder", (req, res) => {
+  console.log(req.body);
   async function run() {
     try {
       const details = req.body;
       const result = await orderList.insertOne(details);
-      res.json(result);
+      console.log(result);
+      res.status(200).send(result);
     } catch (err) {
-      console.log("failed to Confirmed order");
+      console.log("failed to confirm order");
+      res.status(400).send({
+        message: "This is an error OrderConfirmation",
+      });
     }
   }
   run();
 });
+
+
 
 // Find ordered product from database
 app.get("/orderedProduct", async (req, res) => {

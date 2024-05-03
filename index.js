@@ -34,6 +34,7 @@ const subCategoryList = database.collection("subCategoryList");
 const ImageList = database.collection("imageList");
 const clientList = database.collection("clientList")
 const orderList= database.collection("orderList")
+const garbageList= database.collection("garbageList")
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -357,7 +358,7 @@ app.get("/getProducts", (req, res) => {
   console.log("get Product Query");
   async function run() {
     try {
-      const products = productList.find({});
+      const products =await productList.find({});
       const result = await products.toArray();
       res.json(result);
     } catch (err) {
@@ -448,6 +449,21 @@ app.get("/singleOrder/:orderId", async (req, res) => {
     console.log("Failed to load single Ordered product.");
   }
 });
+
+// garbage collection start 
+app.put('/garbage', async(req, res)=>{
+  const {id, images}= req.body || {}
+  try{
+    const _id = new ObjectId(id);
+    const result =await garbageList.insertMany(images)
+    const ans = await productList.deleteOne({ _id: _id });
+    res.json(result, ans)
+    }catch(err){
+    console.log("Failed to add in garbage.");
+  }
+})
+// garbage collection end
+
 
 // create blog post
 app.post("/blogPost", async (req, res) => {

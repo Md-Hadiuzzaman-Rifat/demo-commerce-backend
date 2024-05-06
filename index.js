@@ -5,8 +5,6 @@ const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
 const multer = require("multer");
 const fs = require('fs');
-const { log } = require("console");
-
 
 const app = express();
 //Add a Mongodb URL

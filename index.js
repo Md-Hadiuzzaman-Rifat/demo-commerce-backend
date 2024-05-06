@@ -451,15 +451,38 @@ app.get("/singleOrder/:orderId", async (req, res) => {
 });
 
 // garbage collection start 
-app.put('/garbage', async(req, res)=>{
+// app.put('/garbage', async(req, res)=>{
+//   const {id, images}= req.body || {}
+//   try{
+//     const _id = new ObjectId(id);
+//     const result =await garbageList.insertMany(images)
+//     const ans = await productList.deleteOne({ _id: _id });
+//     res.json(result, ans)
+//     }catch(err){
+//     console.log("Failed to add in garbage.");
+//   }
+// })
+
+app.put('/garbageTrash', async(req, res)=>{
+  console.log("hit put");
   const {id, images}= req.body || {}
+  console.log(req.body.id);
   try{
-    const _id = new ObjectId(id);
-    const result =await garbageList.insertMany(images)
-    const ans = await productList.deleteOne({ _id: _id });
-    res.json(result, ans)
+    const ans =await  garbageList.insertMany(images)
+    res.json("good from edit")
     }catch(err){
     console.log("Failed to add in garbage.");
+  }
+})
+
+app.delete('/garbage/:garbageId', async(req, res)=>{
+  console.log("hit delete ");
+  const _id = new ObjectId(req.params.garbageId);
+  try{
+    const ans = await productList.deleteOne({ _id: _id });
+    res.json("good from delete")
+    }catch(err){
+    console.log("Failed to Delete garbage.");
   }
 })
 // garbage collection end
@@ -542,6 +565,17 @@ app.put("/singleOrder", async (req, res) => {
     res.send(result);
   } catch (err) {
     console.log("Failed to change status");
+  }
+});
+
+// Garbage collection GET and DELETE
+app.get("/getGarbage", async (req, res) => {
+  try {
+    const garbage = await garbageList.find({});
+    const result = await garbage.toArray();
+    res.send(result);
+  } catch (err) {
+    console.log("failed to find garbage collection");
   }
 });
 

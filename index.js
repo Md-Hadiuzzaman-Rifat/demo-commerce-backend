@@ -355,7 +355,6 @@ app.get("/relatedProduct", (req, res) => {
 
 // get all Products
 app.get("/getProducts", (req, res) => {
-  console.log("get Product Query");
   async function run() {
     try {
       const products =await productList.find({});
@@ -568,7 +567,7 @@ app.put("/singleOrder", async (req, res) => {
   }
 });
 
-// Garbage collection GET and DELETE
+// Garbage collection GET 
 app.get("/getGarbage", async (req, res) => {
   try {
     const garbage = await garbageList.find({});
@@ -576,6 +575,19 @@ app.get("/getGarbage", async (req, res) => {
     res.send(result);
   } catch (err) {
     console.log("failed to find garbage collection");
+  }
+});
+
+// Delete data from garbage collection
+app.delete("/deleteGarbage/:id", async (req, res) => {
+  console.log(req.params.id);
+  try {
+    const id = new ObjectId(req.params.id);
+    let result = await garbageList.deleteOne({ _id: id });
+    console.log(result);
+    res.end()
+  } catch (err) {
+    console.log("failed to Delete from garbage collection.");
   }
 });
 

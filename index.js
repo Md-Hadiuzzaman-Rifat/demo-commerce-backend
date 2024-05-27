@@ -146,7 +146,6 @@ app.post("/addUser", async (req, res) => {
     const option = { upsert: true };
     const updateDoc = { $set: user };
     const result = await userList.updateOne(filter, updateDoc, option);
-
     res.json(result);
   } catch {
     console.log("Failed to insert user.");
@@ -428,7 +427,7 @@ app.post("/confirmOrder", (req, res) => {
 // Find ordered product from database
 app.get("/orderedProduct", async (req, res) => {
   try {
-    const products = orderList.find({}).sort({ timestamp: -1 });
+    const products = orderList.find({}).sort({ date: -1 });
     const result = await products.toArray();
     res.json(result);
   } catch (err) {

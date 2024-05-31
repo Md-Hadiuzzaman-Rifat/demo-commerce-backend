@@ -355,7 +355,7 @@ app.get("/getProducts", (req, res) => {
   async function run() {
     try {
       const products =await productList.find({});
-      const result = await products.toArray();
+      const result = (await products.toArray()).sort().reverse();
       res.json(result);
     } catch (err) {
       console.log("failed to find all Products");

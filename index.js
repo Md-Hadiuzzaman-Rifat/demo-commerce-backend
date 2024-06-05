@@ -24,7 +24,7 @@ app.use(express.json());
 app.use(express.static("public"));
 
 // rename the user and collection
-const database = client.db("electric-demo");
+const database = client.db("piprasof_nahin");
 const userList = database.collection("userList");
 const productList = database.collection("productList");
 const categoryList = database.collection("categoryList");
@@ -405,7 +405,7 @@ app.get("/getProduct/:id", (req, res) => {
 
 // confirm order
 app.post("/confirmOrder", (req, res) => {
-  console.log(req.body);
+  // console.log(req.body);
   async function run() {
     try {
       const details = req.body;

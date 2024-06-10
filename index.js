@@ -5,6 +5,7 @@ const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
 const multer = require("multer");
 const fs = require('fs');
+const { log } = require("console");
 
 const app = express();
 //Add a Mongodb URL
@@ -33,6 +34,7 @@ const ImageList = database.collection("imageList");
 const clientList = database.collection("clientList")
 const orderList= database.collection("orderList")
 const garbageList= database.collection("garbageList")
+const sizeChartList= database.collection("sizeChartList")
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -56,6 +58,17 @@ app.post("/createCategory", upload.single("file"), async (req, res) => {
     await ImageList.insertOne({ image: imgName, category: text });
   } catch (err) {
     console.log("failed in single image category upload");
+  }
+});
+
+app.post("/createSizeChart", upload.single("size"), async (req, res) => {
+  const imgName = req.file.filename;
+  const text = req.body.sizeChart;
+
+  try {
+    await sizeChartList.insertOne({ image: imgName, sizeChart: text });
+  } catch (err) {
+    console.log("failed in sizeChart photo upload");
   }
 });
 
@@ -258,6 +271,65 @@ app.delete("/deleteCategory/:id", async (req, res) => {
     }
   }
   run();
+});
+
+// sizeChart start
+app.get("/getSizeChart", (req, res) => {
+  async function run() {
+    try {
+      const sizeChart = await sizeChartList.find({});
+      const result = await sizeChart.toArray();
+      res.json(result);
+    } catch (err) {
+      console.log("failed to find sizeChart");
+    }
+  }
+  run();
+});
+
+app.post("/createSizeChart", async (req, res) => {
+  async function run() {
+    try {
+      const sizeChart = req.body;
+      const result = await sizeChartList.insertOne(sizeChart);
+      res.json(result);
+    } catch (err) {
+      console.log("failed to create sizeChart ");
+    }
+  }
+  run();
+});
+
+app.delete("/deleteSizeChart/:id", async (req, res) => {
+  async function run() {
+    try {
+      const id = new ObjectId(req.params.id);
+      const result = await sizeChartList.deleteOne({ _id: id });
+      res.json(result);
+    } catch (err) {
+      console.log("failed to sizeChart.");
+    }
+  }
+  run();
+});
+
+
+// for my own 
+app.put(`/forMyOwn`, async (req, res) => {
+  try {
+    const { email, role } = req?.body || {};
+    const filter = { email: email };
+    const options = { upsert: true };
+    const updateDoc = {
+      $set: {
+        role: role,
+      },
+    };
+    const result = await userList.updateOne(filter, updateDoc, options);
+    res.send(result);
+  } catch (err) {
+    console.log("Failed insert me..");
+  }
 });
 
 // subCategory add get and delete

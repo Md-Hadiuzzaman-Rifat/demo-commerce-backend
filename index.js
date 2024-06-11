@@ -35,6 +35,7 @@ const clientList = database.collection("clientList")
 const orderList= database.collection("orderList")
 const garbageList= database.collection("garbageList")
 const sizeChartList= database.collection("sizeChartList")
+const coverPhotoList= database.collection("coverPhotoList")
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -659,6 +660,50 @@ app.delete("/deleteGarbage/:id", async (req, res) => {
     console.log("failed to Delete from garbage collection.");
   }
 });
+
+
+// cover photo start 
+app.get("/coverPhotoList", (req, res) => {
+  async function run() {
+    try {
+      const coverPhoto = await coverPhotoList.find({});
+      const result = await coverPhoto.toArray();
+      res.json(result);
+    } catch (err) {
+      console.log("failed to find coverPhoto");
+    }
+  }
+  run();
+});
+
+app.post("/addCoverPhoto", async (req, res) => {
+  async function run() {
+    try {
+      const coverPhoto = req.body;
+      const result = await coverPhotoList.insertOne(coverPhoto);
+      res.json(result);
+    } catch (err) {
+      console.log("failed to create Cover Photo");
+    }
+  }
+  run();
+});
+
+app.delete("/deleteCoverPhoto/:id", async (req, res) => {
+  async function run() {
+    try {
+      const id = new ObjectId(req.params.id);
+      const result = await coverPhotoList.deleteOne({ _id: id });
+      res.json(result);
+    } catch (err) {
+      console.log("failed to delete cover photo");
+    }
+  }
+  run();
+});
+
+
+// cover photo end 
 
 app.listen(process.env.PORT, () => {
   console.log(`Example app listening on port ${process.env.PORT}`);

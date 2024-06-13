@@ -545,7 +545,6 @@ app.put('/garbageTrash', async(req, res)=>{
 })
 
 app.delete('/garbage/:garbageId', async(req, res)=>{
-  console.log("hit delete ");
   const _id = new ObjectId(req.params.garbageId);
   try{
     const ans = await productList.deleteOne({ _id: _id });

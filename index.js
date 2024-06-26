@@ -25,7 +25,8 @@ app.use(express.json());
 app.use(express.static("public"));
 
 // rename the user and collection
-const database = client.db("piprasof_demo2");
+// const database = client.db("piprasof_demo2");
+const database = client.db("mango-web");
 const userList = database.collection("userList");
 const productList = database.collection("productList");
 const categoryList = database.collection("categoryList");

@@ -25,7 +25,7 @@ app.use(express.static("public"));
 
 
 // rename the user and collection
-const database = client.db("nahin-commerce");
+const database = client.db("piprasof_nahin");
 const userList = database.collection("userList");
 const productList = database.collection("productList");
 const categoryList = database.collection("categoryList");

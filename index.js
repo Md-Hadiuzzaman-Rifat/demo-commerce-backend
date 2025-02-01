@@ -5,6 +5,7 @@ const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
 const multer = require("multer");
 const fs = require('fs');
+const { log } = require("console");
 
 const app = express();
 //Add a Mongodb URL
@@ -240,6 +241,46 @@ app.delete("/deleteSubCategory/:id", async (req, res) => {
     }
     run();
   });
+
+  // edit payment start
+// This is for customer order status change
+app.put("/editPayment", async (req, res) => {
+  console.log(req.body);
+  try {
+    const {id ,phone, transId } = req.body;
+    const _id = new ObjectId(id);
+    const filter = { _id };
+    const updateDoc = {
+      $set: {
+        payment:{phone, transId}
+      },
+    };
+    const result = await orderList.updateOne(filter, updateDoc);
+    res.send(result);
+  } catch (err) {
+    console.log("Failed to make payment.");
+  }
+});
+// edit payment end
+
+// delete all item start 
+
+app.delete('/deleteOrder', (req, res)=>{
+  async function run(){
+    try{
+      console.log("hitted");
+      await orderList.deleteMany({})
+      res.end()
+    }catch(err){
+      console.log("failed to delete ordered items");
+      res.status(400).send({
+        message: "This is an error Delete ordered item",
+      });
+    }
+  }
+  run()
+})
+// delete all item end
   
   
 
